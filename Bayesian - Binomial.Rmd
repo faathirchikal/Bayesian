@@ -1,0 +1,86 @@
+---
+title: "Bayesian"
+author: "-"
+date: "10/14/2019"
+output: html_document
+---
+
+
+For the first problem, we'll talk about advertisement on a website
+The website owner said: "If you put an ad on our website, your advertisement will be clicked 10% most of the time, but sometimes as low as 5%, sometimes as high as 15%"
+
+Let's say there are 100 daily visitors on each day, if we model it by a binomial distribution (For each visitor, there is a 5%/10%/20% he/she will click the ad). Then the appropiate prior for theta is a continuous distribution that are centered at 10%, and with a chance at 5% and 20%. The range of the distribution must be between 0 and 1
+
+The appropiate model is beta distribution with parameter a and b such that the center is at 10%
+
+```{r}
+nrand<-100000
+a<-10
+b<-90
+
+#We choose the beta such that the mean (a / a+b) is 0.1
+dt<-rbeta(nrand,a,b)
+plot(density(dt),main='Prior Distribution: beta(10,90)')
+```
+
+
+Here is the sampling distribution for several values of theta
+```{r, echo=FALSE}
+n<-100 #Number of observations
+theta<-c(0.05,0.1, 0.15) #List of possible theta
+J<-length(theta) 
+prob<-array(dim=c(n,J))
+for (j in 1:J){
+  for (i in 1:n){
+    prob[i,j]<-dbinom(i,n,theta[j])
+  }
+}
+
+plot(prob[,1],main='Sampling Distribution, n = 100') #First density plot of theta = 0.05
+segments(1:n, 0, 1:n, prob[,1])
+ 
+points(prob[,2], col="red") #First density plot of theta = 0.1
+segments(1:n, 0, 1:n, prob[,2], col="red")
+
+points(prob[,3], col="blue") #First density plot of theta = 0.2
+segments(1:n, 0, 1:n, prob[,3], col="blue")
+
+legend("topright", legend=c("Theta = 0.05", "Theta = 0.1", "Theta = 0.15"),
+       col=c("black", "red","blue"), lty=1, cex=0.8, bty="n")
+
+```
+
+Let's say, you have decided that you will take the website offer, and put up and ad there
+Next day, from 100 visitor your ad was clicked 30 times
+
+If the prior is a beta(a,b), and the sampling model is a binomial distribution, then the posterior will be
+a beta(a+ny,b+n+y)
+```{r pressure, echo=FALSE}
+#generating a random number from a posterior beta(a + y,b + n + y) distribution
+
+y<-30 #Your ad was clicked 30 times
+n<-100 #From 100 visitor
+a1<-a+y
+b1<-b+n+y
+
+dt.post<-rbeta(nrand,a1,b1)
+plot(density(dt.post),main='Posterior: beta(40,220)',
+     xlim=c(0, 1))
+```
+
+So the true underlying proportion are about 10% ~ 20%
+
+Here is the comparison between the prior and the posterior
+
+```{r}
+
+#Graph overly prior and posterior density
+
+plot(density(dt),xlim=c(0, 1),ylim=c(0,20),main='Prior vs Posterior')
+lines(density(dt.post), col="red")
+
+#Add legend
+legend("topright", legend=c("Prior", "Posterior"),
+       col=c("black", "red"), lty=1, cex=0.8, bty="n")
+
+```

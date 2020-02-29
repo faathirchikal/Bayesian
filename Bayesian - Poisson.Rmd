@@ -1,0 +1,91 @@
+---
+title: "Bayesian - Binomial"
+author: "-"
+date: "10/14/2019"
+output: html_document
+---
+---
+title: "Bayesian"
+author: "-"
+date: "10/14/2019"
+output: html_document
+---
+
+For the second problem, we'll talk about advertisement on a website
+Now there are no fixed daily visitor
+The website owner only said: "If you put an ad on our website, on a daily basis, your ad on average will be clicked by 30 visitor, sometimes as low as 15, but sometimes as high as 50"
+
+The binomial model are not appropriate for this problem, because we don't have an information about number of visitors. In this problem, we are talking about average clicks, one of the appropriate model for this problem is a Poisson Distribution (The sampling model) with parameter Lambda (the average)
+
+The Prior for lambda must be a continous distribution, one of the appropriate model is uniform distribution, gamma distribution, or any other distribution (It has been shown in the book that gamma prior distribution combined with a poisson sampling model, the resulting posterior will also be gamma distribution)
+
+We'll chose a gamma distribution with the criteria "If you put an ad on our website, on a daily basis, your ad on average will be clicked by 30 visitor, sometimes as low as 15, but sometimes as high as 50" -> choose gamma(shape,scale) such that the mean is 30
+
+(Remember that there is no truly correct prior distribution)
+```{r, echo = FALSE}
+nrand<-100000
+shape<-6
+scale<-5
+dt<-rgamma(10000,shape=shape,scale=scale) #Mean of the gamma distribution is shape * scale
+plot(density(dt),ylim=c(0,0.4),main='Prior Distribution gamma(6,5)')
+```
+Looks good enough
+
+Here is the sampling distribution for several values of lambda
+
+```{r}
+n<-100
+lambda<-c(15,30, 50)
+J<-length(lambda)
+prob<-array(dim=c(n,J))
+for (j in 1:J){
+  for (i in 1:n){
+    prob[i,j]<-dpois(i,lambda = lambda[j])
+  }
+}
+plot(prob[,1], main = 'Poisson Sampling Distribution') #First density plot of lambda = 15
+segments(1:n, 0, 1:n, prob[,1])
+
+points(prob[,2], col="red") #First density plot of lambda = 30
+segments(1:n, 0, 1:n, prob[,2], col="red")
+
+points(prob[,3], col="blue") #First density plot of lambda = 50
+segments(1:n, 0, 1:n, prob[,3], col="blue")
+
+legend("topright", legend=c("Lambda = 15", "Lambda = 30", "Lambda = 50"),
+       col=c("black", "red","blue"), lty=1, cex=0.8, bty="n")
+```
+
+Let's say, you have decided that you will take the website offer, and put up and ad there, for the next week, you get on average: 10, 15, 30, 10, 60, 50, 20
+
+in can be concurred that n = 7 and Yi = {10,15,30,10,60,50,20}
+If the prior is a gamma(shape,scale), and the sampling model is a poisson distribution, then the posterior will be
+a gamma(shape+sum(y),scale+n)
+```{r pressure, echo=FALSE}
+#generating a random number from a posterior gamma(shape+ sum(y),scale+n) distribution
+y<-c(10,15,30,10,60,50,20) #clicks on that weeks
+n<-7 #You put up the ad on 7 days
+a1<-shape+sum(y)
+b1<-scale+n
+nrand<-10000
+dt.post<-rgamma(nrand,a1,b1)
+plot(density(dt.post),main='Posterior: gamma(201,12)',
+     xlim=c(0, 50),ylim=c(0,0.4))
+```
+
+So the true underlying proportion are about 13% ~ 20%
+
+Here is the comparison between the prior and the posterior
+
+```{r}
+
+#Graph overly prior and posterior density
+
+plot(density(dt),xlim=c(0, 100),ylim = c(0,0.4),main='Prior vs Posterior')
+lines(density(dt.post), col="red")
+
+#Add legend
+legend("topright", legend=c("Prior", "Posterior"),
+       col=c("black", "red"), lty=1, cex=0.8, bty="n")
+
+```
